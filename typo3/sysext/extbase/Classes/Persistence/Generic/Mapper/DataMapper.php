@@ -375,7 +375,11 @@ class DataMapper implements \TYPO3\CMS\Core\SingletonInterface {
 	protected function getConstraint(\TYPO3\CMS\Extbase\Persistence\QueryInterface $query, \TYPO3\CMS\Extbase\DomainObject\DomainObjectInterface $parentObject, $propertyName, $fieldValue = '', $relationTableMatchFields = array()) {
 		$columnMap = $this->getDataMap(get_class($parentObject))->getColumnMap($propertyName);
 		if ($columnMap->getParentKeyFieldName() !== NULL) {
-			$constraint = $query->equals($columnMap->getParentKeyFieldName(), $parentObject);
+			if ($columnMap->isRelationsOverriddenByTranslation()) {
+				$constraint = $query->equals($columnMap->getParentKeyFieldName(), $parentObject->_getProperty('_localizedUid'));
+			} else {
+				$constraint = $query->equals($columnMap->getParentKeyFieldName(), $parentObject);
+			}
 			if ($columnMap->getParentTableFieldName() !== NULL) {
 				$constraint = $query->logicalAnd($constraint, $query->equals($columnMap->getParentTableFieldName(), $this->getDataMap(get_class($parentObject))->getTableName()));
 			}
@@ -387,6 +391,7 @@ class DataMapper implements \TYPO3\CMS\Core\SingletonInterface {
 				$constraint = $query->logicalAnd($constraint, $query->equals($relationTableMatchFieldName, $relationTableMatchFieldValue));
 			}
 		}
+
 		return $constraint;
 	}
 
